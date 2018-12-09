@@ -243,6 +243,8 @@ if __name__ == "__main__":
 
 ### 2.request 和 resopnse
 
+#### a.请求相关信息
+
 `request.method`:获取请求的方法
 
 `request.json`
@@ -256,4 +258,68 @@ if __name__ == "__main__":
 `request.from.getlist("name_list")`:获取参数列表。（多个值）
 
 `request.values.get("age")`:获取GET和POST请求携带的所有参数（GET/POST通用）
+
+`request.cookies.get("name")`:获取cookies信息
+
+`request.headers.get("Host")`:获取请求头相关的信息
+
+`request.path`:获取用户访问的url地址，例如（/，/login,/index)
+
+`request.full_path`:获取用户访问的完整路径+参数，例如（/login/?age=18&name=boby)
+
+`request.host`:获取主机地址
+
+`request.files`:获取用户上传的文件
+
+```python
+obj = request.files['the_file_name']
+
+obj.save('/var/www/uploads/' + secure_filename(f.filename))  # 直接保存
+```
+
+#### b.响应相关信息
+
+```python
+return "字符串"
+return render_template("xx.html",**kwargs)
+return redirect("/index")
+```
+
+相应json数据
+
+```python
+# 方式一
+return jsonify(user_list)
+# 配置方式
+app.config['JSON_AS_ASCII']=False  #指定json编码格式 如果为False 就不使用ascii编码，
+app.config['JSONIFY_MIMETYPE'] ="application/json;charset=utf-8" #指定浏览器渲染的文件类型，和解码格式；
+```
+
+```python
+# 方式二
+return Response(data,mimetype="application/json;charset=utf-8",)
+```
+
+```python
+# 设置响应头
+from flask import Flask,make_response,render_template
+
+response = make_resopnse(render_template("index.html"))
+response.set_cookie("key","value")
+response.delete_cookie("key")
+response.headers["X-something"] = "A value"
+
+return reponse
+```
+
+#### C.Flask CBV 视图
+
+```python
+# CBV视图
+
+
+
+```
+
+
 
