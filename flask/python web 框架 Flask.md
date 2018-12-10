@@ -316,10 +316,115 @@ return reponse
 
 ```python
 # CBV视图
+from functools import wraps
+from flask import Flask,url_for,views
 
+app = Flask()
 
+def auth(func):
+    @wraps(func)
+    def inner(*args,**kwargs):
+        # 权限认证
+        result = func(*args,**kwargs)
+        return result
+    return inner
+
+# CBV shitu
+class IndexView(views.MethodView):
+    method = ["GET"]
+    decorators = [auth,]
+    
+    def get(self):
+        return "..."
+    
+    def post(self):
+        return "???"
+
+app.add_url_rule("/index",view_func=IndexView.as_view(name="name1"))
+
+if __name__ == "__main__":
+    app.run()
 
 ```
 
 
+
+## 四、模板语言
+
+Flask 使用的是Jinja2模板语言，所以其语法和Django无差别(Django的模板语言参考Jinja2)
+
+### 1.引入静态文件
+
+方式一、别名引入
+
+```html
+<linlk rel="stylesheet" href="/zhanggen/commons.css"
+```
+
+方式二、url_for()方式引入
+
+```html
+<link rel="stylesheet" href="{{ url_for('stactic',filename='commons.css')}}"
+```
+
+### 2.模板语言引用上下文对象
+
+变量
+
+```html
+<span>{{name}}</span>
+```
+
+循环、索引取值
+
+```html
+<ul>
+    {% for user in user_list %}
+    <li>{{user.name}}</li>
+    {% endfor}
+</ul>
+{{user_list.0}}
+{{user_list[0]}}
+
+```
+
+Flask的Jinjia2可以通过Context把视图中的函数传递到模板语言中执行，simple_tag 、 simple_filter
+
+simle_tag(只能传两个参数，支持for ,if)
+
+```python
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.template_global()
+def foo(arg):
+    return "<input type='text'>"
+```
+
+```html
+<h1>
+    {{foo(1)|safe}}
+</h1>
+```
+
+simple_filter(对参数无限制，不支持for、if)
+
+```python
+from flask import Flask
+
+app = Flask(__name__)
+@app.template_filter()
+def foo(arg1,arg2,arg3):
+    return arg1+arg2+arg3
+
+```
+
+```html
+<h1>
+   {{"boy"|foo("s","b")}} 
+</h1>
+```
+
+### 3.wtform(flask 表单验证插件)
 
