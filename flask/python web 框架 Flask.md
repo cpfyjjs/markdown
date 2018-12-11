@@ -897,8 +897,126 @@ if __name__ == '__main__':
 
 ```python
 # 关于用户账户的蓝图
+from flask import Blueprint		# 导入蓝图
 
+login = Blueprint('login',__name__)		# 在本地模块实例化一个蓝图
+
+@login.route('/logni',methods=['GET','POST'])
+def login1():
+    return "登陆页面"
 ```
+
+```python
+from flask import Blueprint
+index=Blueprint('index',__name__)
+@index.route('/index/',methods=['GET','POST'])
+def index1():
+    return '首页'
+```
+
+```python
+from flask import Flask
+
+app=Flask(__name__,template_folder='templates',static_path='/static/',static_url_path='/static/')
+
+app.debug=True
+
+
+from .views import login
+from .views import index
+
+#把文件中蓝图对象注册到app里
+app.register_blueprint(login.login,url_prefix='/login') #访问login蓝图必须以url_prefix开头
+app.register_blueprint(index.index,url_prefix='/index')
+
+if __name__ == '__main__':
+    app.run()
+```
+
+## 七、闪现（message）
+
+message是一个基于Session实现的用于保存数据的集合，其特点是：一次性
+
+特点：*和lambda匿名函数一样不长期占用内存*
+
+```python
+from flask import Flask,request,flash,get_flashed_messages
+
+app = Flask(__name__)
+app.secret_key = "sdfasdfasd"
+
+@app.route("/set")
+def set():
+    falsh("msg1")	# 在message中设置一个值
+    return 'ok'
+
+@app.route("/get")
+def get():
+    msg = get_flashed_messages()	# 获取message中设置的值，只能取一次
+	print(msg)
+    return 'ok'
+
+if __name__ == "__main__":
+    app.run()
+    
+```
+
+## 八、中间件
+
+flask 也有中间件功能，和Django一样，不同的是是利用装饰器实现的；
+
+*1.*@app.before_first_request :请求第1次到来执行1次，之后都不执行；
+
+2.@app.before_request：请求到达视图之前执行；（改函数不能有返回值，否则直接在当前返回）
+
+3.@app.after_request：请求 经过视图之后执行；（最下面的先执行）
+
+```python
+# -*- coding:utf-8 -*-
+from flask import Flask, Request, render_template
+
+app = Flask(__name__, template_folder='templates')
+app.debug = True
+
+
+@app.before_first_request  #第1个请求到来执行
+def before_first_request1():
+    print('before_first_request1')
+
+@app.before_request #中间件2
+def before_request1():
+    Request.nnn = 123
+    print('before_request1')  #不能有返回值，一旦有返回值在当前返回
+
+@app.before_request
+def before_request2():
+    print('before_request2')
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return 'This page does not exist', 404
+
+@app.route('/')
+def hello_world():
+    return "Hello World"
+
+@app.after_request #中间件 执行视图之后
+def after_request1(response):
+    print('after_request1', response)
+    return response
+
+@app.after_request #中间件 执行视图之后 先执行 after_request2
+def after_request2(response):
+    print('after_request2', response)
+    return response
+
+if __name__ == '__main__':
+    app.run()
+```
+
+## 九、Flask相关组件
+
+
 
 
 
