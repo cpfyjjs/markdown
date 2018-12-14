@@ -97,7 +97,113 @@ class DigSpider(scrapy.Spider):
     #爬虫应用名称，通过此名称启动爬虫命令
     name = "dig"
     
-    #
+    #允许的域名,即只允许爬去此域名下的网页，
+    allowde_domians = ['chouti.com']
     
+    #起始URL
+    start_urls=['http://chouti.com']
+    
+    has_request_set ={}
+    
+    #解析响应
+    def parse(self,response):
+        
+        page_list=response.xpath("//div[@id="dig_lcpage"]//a[re:test(@href, "/all/hot/recent/\d+")]/@href").extrat()
+        
+        for page in page_list:
+            page_url = "http://dig.chouti.com%s"%page
+			key = self.md5(page_url)
+            if key in self.has_request_set:
+                pass
+            else:
+                self.has_request_set[key] = page_url
+                obj = Request(url=page_url, method='GET', callback=self.parse)
+                yield obj
+                
+    @staticmethod
+    def md5(val):
+        import hashlib
+        has = hashlib.md5()
+        ha.update(val,encoding="utf-8")
+        key = ha.hexdigest()
+        return key
+         
+```
+
+启动项目
+
+`scrapy crawl dig`
+
+### 4.xpath选择器
+
+```python
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+from scrapy.selector import Selector, HtmlXPathSelector
+from scrapy.http import HtmlResponse
+html = """<!DOCTYPE html>
+<html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title></title>
+    </head>
+    <body>
+        <ul>
+            <li class="item-"><a id='i1' href="link.html">first item</a></li>
+            <li class="item-0"><a id='i2' href="llink.html">first item</a></li>
+            <li class="item-1"><a href="llink2.html">second item<span>vv</span></a></li>
+        </ul>
+        <div><a href="llink2.html">second item</a></div>
+    </body>
+</html>
+"""
+response = HtmlResponse(url='http://example.com', body=html,encoding='utf-8')
+hxs = HtmlXPathSelector(response)
+# 选取在子孙中的a标签
+hxs = Selector(response=response).xpath('//a')
+# 选取在子孙中的a标签的第二个
+hxs = Selector(response=response).xpath('//a[2]')
+# 选取在子孙中带有id属性的a标签
+hxs = Selector(response=response).xpath('//a[@id]')
+# 选取在子孙中id属性等于i1的a标签
+hxs = Selector(response=response).xpath('//a[@id="i1"]')
+# 选取在子孙中id属性等于i1、href属性等于link.html的a标签
+hxs = Selector(response=response).xpath('//a[@href="link.html"][@id="i1"]')
+# 选取在子孙中href属性包含link的a标签
+hxs = Selector(response=response).xpath('//a[contains(@href, "link")]')
+# 选取在子孙中href属性以link开头的a标签
+hxs = Selector(response=response).xpath('//a[starts-with(@href, "link")]')
+# 利用正则表达式
+hxs = Selector(response=response).xpath('//a[re:test(@id, "i\d+")]')
+# 提取文字
+hxs = Selector(response=response).xpath('//a[re:test(@id, "i\d+")]/text()').extract()
+# print(hxs)
+hxs = Selector(response=response).xpath('//a[re:test(@id, "i\d+")]/@href').extract()
+# 提取href属性
+hxs = Selector(response=response).xpath('/html/body/ul/li/a/@href').extract()
+# print(hxs)
+hxs = Selector(response=response).xpath('//body/ul/li/a/@href').extract_first()
+```
+
+登陆抽屉网
+
+```python
+#_*_ conding:utf-8 *_*
+import scrapy
+from scrapy.http.request import Request
+from scrapy.http.cookies import CookieJar
+from scrapy import FormRequest
+
+class ChouTiSpider(scrapy.Spider):
+    # 爬虫名称
+    name = 'chouti'
+    #允许域名
+    allow_domians = ['chouti.com']
+    
+    cookiese_dict={}
+    has_request_set ={}
+    
+    def start_request(self):
+        
 ```
 
