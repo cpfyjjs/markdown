@@ -391,8 +391,98 @@ class CustomPipeline(object):
         
     def process_item(self，item,spider):
         """
+        操作并进行持久化
         """
+        # 表示会被后续的pipeline继续处理
+        return item
+    
+    	# 表示将item丢弃，不会被后续的pipeline处理
+        # raise DropItem()
+        
+    def close_spider(self,spider):
+        """
+        爬虫关闭时，被调用
+        """
+        print("处理数据之后")
+        
 ```
+
+### 6.中间件
+
+#### 爬虫中间件
+
+```python
+class SpiderMiddleware(object):
+
+    def process_spider_input(self,response, spider):
+        """
+        下载完成，执行，然后交给parse处理 
+        """
+        pass
+
+    def process_spider_output(self,response, result, spider):
+        """
+        spider处理完成，返回时调用
+        :return: 必须返回包含 Request 或 Item 对象的可迭代对象(iterable)
+        """
+        return result
+
+    def process_spider_exception(self,response, exception, spider):
+        """
+        异常调用
+        :return: None,继续交给后续中间件处理异常；含 Response 或 Item 的可迭代对象(iterable)，交给调度器或pipeline
+        """
+        return None
+
+
+    def process_start_requests(self,start_requests, spider):
+        """
+        爬虫启动时调用
+        :return: 包含 Request 对象的可迭代对象
+        """
+        return start_requests
+```
+
+#### 下载中间件
+
+```python
+# 定义下载中间件
+class DownMiddleware(object):
+    
+    def process_request(self,request,spider):
+        """
+        下载器下载前执行
+        retrun :
+        	None:继续后续中间件去下载
+        	Response对象：停止后续的process_request的执行，开始执行process_response
+        	Request对象：停止下载中间件的执行，将request对象返回给调度器
+        	raise IgnoreRequest:停止后去process_request的执行，开始执行processs_exception
+        """
+        pass
+    
+    def process_response(self,request,response,spider):
+        """
+        下载器下载完成后执行
+        return：
+        	Response对象：转交给后续的中间件执行process_response
+        	Request对象:停止后续下载中间件的执行，将request对象返回给调度器
+        	raise IgnoreRequest异常，停止process_request的执行，开始执行process_exception
+        """
+        return response
+    
+    def process_exception(self,request,response,spider):
+        """
+        当下载处理器(download handler)或 process_request() (下载中间件)抛出异常时执行。
+        :return: 
+            None：继续交给后续中间件处理异常；
+            Response对象：停止后续process_exception方法
+            Request对象：停止中间件，request将会被重新调用下载
+        """
+        return None
+       
+```
+
+### 7.自定制命令
 
 
 
