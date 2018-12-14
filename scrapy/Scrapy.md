@@ -185,7 +185,7 @@ hxs = Selector(response=response).xpath('/html/body/ul/li/a/@href').extract()
 hxs = Selector(response=response).xpath('//body/ul/li/a/@href').extract_first()
 ```
 
-登陆抽屉网
+#### 登陆抽屉网,并点赞(cookies)
 
 ```python
 #_*_ conding:utf-8 *_*
@@ -200,10 +200,203 @@ class ChouTiSpider(scrapy.Spider):
     #允许域名
     allow_domians = ['chouti.com']
     
-    cookiese_dict={}
+    cookie_dict={}
     has_request_set ={}
     
-    def start_request(self):
+    def start_request(self,response):
+        """起始方法"""
+        url = 'http://dig/chouti.com'
+        # return [Request(url = url,callback = self.login)]
+        yield Request(url = url ,callback = self.login)
+        
+    def login(self,response):
+        """登陆"""
+        cookie_jar = CookieJar()
+        # 提取cookies
+        cookie_jar.extract_cookies(response,response.request)
+        # 将提取的cookies 放入cookie_dict中
+        for k,v in cookie_jar._cookies.items():
+            for i,j in v.items():
+                for m,n in j.items():
+                    self.cookie_dict[m]=n.value
+        req = Request(
+        url = 'http://dig/chouti.com/login',
+        method = "POST",
+        headers = {'Content-Type':'appliction/x-www-form-urlencoded; charset=UTF-8'},
+        cookies = self.cookie_dict,
+        callback = self.check_login)
+        yield req
+        
+    def check_login(self,response):
+        """返回首页"""
+        req = Request(
+        url = 'http://dig/chouti.com/',
+        method = "GET",
+        cookies = self.cookie_dict,
+        dont_filter = True,
+        callback = self.show)
+        yield req
+        
+     def show(self, response):
+        # print(response)
+        hxs = HtmlXPathSelector(response)
+        news_list = hxs.select('//div[@id="content-list"]/div[@class="item"]')
+        for new in news_list:
+            # temp = new.xpath('div/div[@class="part2"]/@share-linkid').extract()
+            link_id = new.xpath('*/div[@class="part2"]/@share-linkid').extract_first()
+            yield Request(
+                url='http://dig.chouti.com/link/vote?linksId=%s' %(link_id,),
+                method='POST',
+                cookies=self.cookie_dict,
+                callback=self.do_favor
+            )
+
+        page_list = hxs.select('//div[@id="dig_lcpage"]//a[re:test(@href, "/all/hot/recent/\d+")]/@href').extract()
+        for page in page_list:
+
+            page_url = 'http://dig.chouti.com%s' % page
+            import hashlib
+            hash = hashlib.md5()
+            hash.update(bytes(page_url,encoding='utf-8'))
+            key = hash.hexdigest()
+            if key in self.has_request_set:
+                pass
+            else:
+                self.has_request_set[key] = page_url
+                yield Request(
+                    url=page_url,
+                    method='GET',
+                    callback=self.show
+                )
+
+    def do_favor(self, response):
+        print(response.text)
         
 ```
+
+#### 处理cookies
+
+```python
+import scrapy
+from scrapy.http.response.html import HtmlResponse
+from scrapy.http import Request
+from scrapy.http.cookies import CookieJar
+
+
+class ChoutiSpider(scrapy.Spider):
+    name = "chouti"
+    allowed_domains = ["chouti.com"]
+    start_urls = (
+        'http://www.chouti.com/',
+    )
+
+    def start_requests(self):
+        url = 'http://dig.chouti.com/'
+        yield Request(url=url, callback=self.login, meta={'cookiejar': True})
+
+    def login(self, response):
+        print(response.headers.getlist('Set-Cookie'))
+        req = Request(
+            url='http://dig.chouti.com/login',
+            method='POST',
+            headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+            body='phone=8613121758648&password=woshiniba&oneMonth=1',
+            callback=self.check_login,
+            meta={'cookiejar': True}
+        )
+        yield req
+
+    def check_login(self, response):
+        print(response.text)
+```
+
+### 5.格式化数据
+
+```python
+import scrapy
+
+# 定义结构化数据
+class XiaoHuaItem(scrapy.Item):
+    name = scrapy.Field()
+    school = scrapy.Field()
+    url = scrapy.Field()
+    
+```
+
+```python
+import json
+import os
+import requests
+
+
+class JsonPipeline(object):
+    def __init__(self):
+        self.file = open('xiaohua.txt', 'w')
+
+    def process_item(self, item, spider):
+        v = json.dumps(dict(item), ensure_ascii=False)
+        self.file.write(v)
+        self.file.write('\n')
+        self.file.flush()
+        return item
+
+
+class FilePipeline(object):
+    def __init__(self):
+        if not os.path.exists('imgs'):
+            os.makedirs('imgs')
+
+    def process_item(self, item, spider):
+        response = requests.get(item['url'], stream=True)
+        file_name = '%s_%s.jpg' % (item['name'], item['school'])
+        with open(os.path.join('imgs', file_name), mode='wb') as f:
+            f.write(response.content)
+        return item
+```
+
+```python
+# setting.py
+ITEM_PIPELINES = {
+   'spider1.pipelines.JsonPipeline': 100,
+   'spider1.pipelines.FilePipeline': 300,
+}
+# 每行后面的整型值，确定了他们运行的顺序，item按数字从低到高的顺序，通过pipeline，通常将这些数字定义在0-1000范围内。
+```
+
+**自定义pipline**
+
+```python
+#_*_ coding:UTF-8 _*_
+
+class CustomPipeline(object):
+    """自定义Pipeline"""
+    
+    def __init__(self,v):
+        self.value = v
+        
+    @classmethod
+    def from_crawler(cls,crawler):
+        """
+        初始化时候，用于创建Pipeline对象
+        """
+        val = crawler.settings.getint("MMM")
+        retrun cls(val)
+        
+    def open_spider(self,spider):
+        """
+        爬虫开始执行的时候调用
+        """
+        # 可以用于链接数据库等初始化操作
+        print("处理数据之前")
+        
+    def process_item(self，item,spider):
+        """
+        """
+```
+
+
+
+
+
+
 
