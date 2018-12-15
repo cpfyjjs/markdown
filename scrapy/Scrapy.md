@@ -1,6 +1,6 @@
 # Scrapy
 
-scrapy 是一个为了爬取网站数据，提取结构性数据而编写的应用框架。其可以应用在数据挖掘，信息处理和储存历史数据等一系列的程序中。
+Scrapy 是一个为了爬取网站数据，提取结构性数据而编写的应用框架。其可以应用在数据挖掘，信息处理和储存历史数据等一系列的程序中。
 
 整体架构如下
 
@@ -34,6 +34,18 @@ Scrapy运行流程大概如下：
 5. 解析出实体（Item）,则交给实体管道进行进一步的处理
 6. 解析出的是链接（URL）,则把URL交给调度器等待抓取
 
+官方文档数据流：
+
+1. 引擎打开一个网站(open a domain)，找到处理该网站的Spider并向该spider请求第一个要爬取的URL(s)。
+2. 引擎从Spider中获取到第一个要爬取的URL并在调度器(Scheduler)以Request调度。
+3. 引擎向调度器请求下一个要爬取的URL。
+4. 调度器返回下一个要爬取的URL给引擎，引擎将URL通过下载中间件(请求(request)方向)转发给下载器(Downloader)。
+5. 一旦页面下载完毕，下载器生成一个该页面的Response，并将其通过下载中间件(返回(response)方向)发送给引擎。
+6. 引擎从下载器中接收到Response并通过Spider中间件(输入方向)发送给Spider处理。
+7. Spider处理Response并返回爬取到的Item及(跟进的)新的Request给引擎。
+8. 引擎将(Spider返回的)爬取到的Item给Item Pipeline，将(Spider返回的)Request给调度器。
+9. (从第二步)重复直到调度器中没有更多地request，引擎关闭该网站。
+
 **安装**
 
 `pip install scrapy`
@@ -61,18 +73,18 @@ PS:
 ### 2.项目结构及爬虫应用简介
 
 ```
-project_name``/
-   ``scrapy.cfg
-   ``project_name``/
-       ``__init__.py
-       ``items.py
-       ``pipelines.py
-       ``settings.py
-       ``spiders``/
-           ``__init__.py
-           ``爬虫``1.py
-           ``爬虫``2.py
-           ``爬虫``3.py
+project_name/
+   scrapy.cfg
+   project_name/
+       __init__.py
+       items.py
+       pipelines.py
+       settings.py
+       spiders/
+           __init__.py
+           爬虫1.py
+           爬虫2.py
+           爬虫3.py
 ```
 
 文件说明：
@@ -98,7 +110,7 @@ class DigSpider(scrapy.Spider):
     name = "dig"
     
     #允许的域名,即只允许爬去此域名下的网页，
-    allowde_domians = ['chouti.com']
+    allowed_domians = ['chouti.com']
     
     #起始URL
     start_urls=['http://chouti.com']
@@ -106,8 +118,7 @@ class DigSpider(scrapy.Spider):
     has_request_set ={}
     
     #解析响应
-    def parse(self,response):
-        
+    def parse(self,response):  
         page_list=response.xpath("//div[@id="dig_lcpage"]//a[re:test(@href, "/all/hot/recent/\d+")]/@href").extrat()
         
         for page in page_list:
@@ -220,11 +231,12 @@ class ChouTiSpider(scrapy.Spider):
                 for m,n in j.items():
                     self.cookie_dict[m]=n.value
         req = Request(
-        url = 'http://dig/chouti.com/login',
-        method = "POST",
-        headers = {'Content-Type':'appliction/x-www-form-urlencoded; charset=UTF-8'},
-        cookies = self.cookie_dict,
-        callback = self.check_login)
+            url = 'http://dig/chouti.com/login',
+            method = "POST",
+            headers = {'Content-Type':'appliction/x-www-form-urlencoded; charset=UTF-8'},
+			body='phone=8615131255089&password=pppppppp&oneMonth=1',
+            cookies = self.cookie_dict,
+            callback = self.check_login)
         yield req
         
     def check_login(self,response):
@@ -252,8 +264,8 @@ class ChouTiSpider(scrapy.Spider):
             )
 
         page_list = hxs.select('//div[@id="dig_lcpage"]//a[re:test(@href, "/all/hot/recent/\d+")]/@href').extract()
+        
         for page in page_list:
-
             page_url = 'http://dig.chouti.com%s' % page
             import hashlib
             hash = hashlib.md5()
@@ -363,7 +375,7 @@ ITEM_PIPELINES = {
 # 每行后面的整型值，确定了他们运行的顺序，item按数字从低到高的顺序，通过pipeline，通常将这些数字定义在0-1000范围内。
 ```
 
-**自定义pipline**
+#### pipeline
 
 ```python
 #_*_ coding:UTF-8 _*_
@@ -410,6 +422,8 @@ class CustomPipeline(object):
 ### 6.中间件
 
 #### 爬虫中间件
+
+爬虫中间件是介入到Scrapy的spider处理机制的钩子框架，您可以添加代码来处理发送给 [Spiders](https://scrapy-chs.readthedocs.io/zh_CN/latest/topics/spiders.html#topics-spiders)的response及spider产生的item和request。
 
 ```python
 class SpiderMiddleware(object):
