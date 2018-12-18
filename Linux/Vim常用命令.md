@@ -80,6 +80,17 @@ p 			#粘贴在当前位置
 :set noignorecase　　#不忽略大小写的查找
 ```
 
+### 替换
+
+```python
+:s/old/new/		#用new替换old,替换当前行的第一个匹配的
+:s/old/new/g	#用new替换old,替换当前行的所有匹配
+:%s/old/new/ 	#用new替换old，替换所有行的第一个匹配
+:%s/old/new/g 	#用new替换old，替换整个文件的所有匹配
+    
+也可以用v或V选择指定行，然后执行
+```
+
 
 
 
