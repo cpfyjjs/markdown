@@ -331,7 +331,7 @@ def auth(func):
 
 # CBV shitu
 class IndexView(views.MethodView):
-    method = ["GET"]
+    method = ["GET"，"POST"]
     decorators = [auth,]
     
     def get(self):

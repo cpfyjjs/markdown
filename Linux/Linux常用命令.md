@@ -209,8 +209,8 @@
 >  单纯tar仅为打包（多个文件包成一个大文件），加上参数-j(bzip2格式.bz2)、-z（gzip格式.gz）可以备份、压缩(-c)、解压（-x），备份一般比压缩多加参数-p（保留原本文件的权限与属性），-C可以指定解压到特定目录；bzip2、gzip只能对单一文件压缩；
 
 - **file 文件名** ：查文件类型（可看是用哪一种方式压缩的）
-- **tar -zxvf a.tar.gz -C ./test** ：解压tar.gz到当前目录下的test目录
-- **tar -zcvf /opt/c.tar.gz ./a/** ：压缩tar.gz（把当前目录下的a目录及目录下所有文件压缩为 /opt/目录下的c.tar.gz）
+- **tar -zxvf a.tar.gz -C   ./test** ：解压tar.gz到当前目录下的test目录
+- **tar -zcvf /opt/c.tar.gz   ./a/** ：压缩tar.gz（把当前目录下的a目录及目录下所有文件压缩为 /opt/目录下的c.tar.gz）
 - **tar -jxvf a.tar.bz2** ：解压tar.bz2（到当前目录）
 - **tar -jcvf c.tar.bz2 ./a/** ：压缩tar.bz2（把当前目录下的a目录及目录下所有文件压缩到当前目录下为c.tar.gz2）
 - **unzip a.zip** ：解压zip（到当前目录）
