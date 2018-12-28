@@ -1,0 +1,15 @@
+2018-12-28 15:41:53,825 - simple_logger -DEBUG - debug message
+2018-12-28 15:41:53,826 - simple_logger -INFO - info message
+2018-12-28 15:41:53,826 - simple_logger -WARNING - warn message
+2018-12-28 15:41:53,826 - simple_logger -ERROR - error message
+2018-12-28 15:41:53,826 - simple_logger -CRITICAL - critical message
+debug message
+info message
+warn message
+error message
+critical message
+debug message
+info message
+warn message
+error message
+critical message
