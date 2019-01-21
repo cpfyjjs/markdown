@@ -251,11 +251,11 @@ if __name__ == "__main__":
 
 `request.args`:获取get的请求参数
 
-`request.from`:获取post的请求参数
+`request.form`:获取post的请求参数
 
 `request.form.get("name")`:获取单个值
 
-`request.from.getlist("name_list")`:获取参数列表。（多个值）
+`request.form.getlist("name_list")`:获取参数列表。（多个值）
 
 `request.values.get("age")`:获取GET和POST请求携带的所有参数（GET/POST通用）
 
