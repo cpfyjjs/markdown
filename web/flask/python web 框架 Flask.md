@@ -253,7 +253,7 @@ if __name__ == "__main__":
 
 `request.form`:获取post的请求参数
 
-`request.form.get("name")`:获取单个值
+`request.form.get("name")`:获取单 个值
 
 `request.form.getlist("name_list")`:获取参数列表。（多个值）
 
